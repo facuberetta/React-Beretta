@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { useState, useEffect } from "react"; // <-- Agregamos la importación
+import { collection, getDocs } from "firebase/firestore";
 import ItemList from "./itemList";
+import { db } from "../firebaseConfig";
 
 const ItemListContainer = ({ filter }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const db = getFirestore();
     const itemsCollection = collection(db, "vinos");
 
     getDocs(itemsCollection)
@@ -16,6 +16,7 @@ const ItemListContainer = ({ filter }) => {
           id: doc.id,
           ...doc.data(),
         }));
+        console.log("Productos obtenidos:", itemsData);
         setItems(itemsData);
       })
       .catch((error) => {
@@ -26,9 +27,10 @@ const ItemListContainer = ({ filter }) => {
       });
   }, []);
 
-  // Aquí filtramos los productos si hay un filtro
   const filteredItems = filter
-    ? items.filter((item) => item.name.toLowerCase().includes(filter.toLowerCase()))
+    ? items.filter((item) =>
+        item.name.toLowerCase().includes(filter.toLowerCase())
+      )
     : items;
 
   return (
@@ -37,5 +39,6 @@ const ItemListContainer = ({ filter }) => {
     </div>
   );
 };
+
 
 export default ItemListContainer;

@@ -6,6 +6,9 @@ import { db } from "./firebaseConfig";
 import ProductList from "./Components/productList.js";
 import CategoryFilter from "./Components/categoryFilter.js";
 import Cart from "./Components/cart";
+import 'bootstrap/dist/css/bootstrap.min.css';
+import "./App.css";
+
 
 function App() {
     const [products, setProducts] = useState([]);
@@ -32,7 +35,7 @@ function App() {
         <Router>
             <div>
                 <Navbar />
-                <h1>E-Commerce de Vinos</h1>
+                <h1>Emma Wine's</h1>
                 <CategoryFilter categories={categories} setSelectedCategory={setSelectedCategory} />
                 <Routes>
                     <Route path="/" element={<ProductList products={products} selectedCategory={selectedCategory} addToCart={addToCart} />} />
