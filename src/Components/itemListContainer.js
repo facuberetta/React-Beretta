@@ -36,6 +36,7 @@ const ItemListContainer = ({ filter }) => {
   return (
     <div>
       {loading ? <h2>Cargando productos...</h2> : <ItemList items={filteredItems} />}
+      {items.length === 0 && !loading && <h2>No hay productos disponibles.</h2>}
     </div>
   );
 };

@@ -1,43 +1,58 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
-import ItemDetail from "../ItemDetail"; 
+import ItemDetail from "./itemDetail"; 
+import { useCart } from "../context/cartContext";
 
 const ItemDetailContainer = () => {
+  const { addToCart } = useCart(); 
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { id } = useParams(); 
+  const [error, setError] = useState(null);
+  const { id } = useParams();
 
   useEffect(() => {
-    const db = getFirestore(); 
-    const itemRef = doc(db, "vinos", id);
+    if (!id) {
+      setError("ID de producto no válido.");
+      setLoading(false);
+      return;
+    }
 
+    const fetchItem = async () => {
+      try {
+        const db = getFirestore();
+        const itemRef = doc(db, "vinos", id);
+        const docSnap = await getDoc(itemRef);
     
-    getDoc(itemRef)
-      .then((docSnap) => {
         if (docSnap.exists()) {
-          setItem({ id: docSnap.id, ...docSnap.data() });
+          const itemData = docSnap.data();
+          console.log("Datos del producto:", itemData); // Verifica los datos obtenidos
+    
+          // Verifica si hay campos faltantes
+          if (!itemData.name || !itemData.price || !itemData.stock) {
+            throw new Error("Datos incompletos en Firebase.");
+          }
+    
+          setItem({ id: docSnap.id, ...itemData });
         } else {
-          console.log("No hay documento con ese ID");
+          setError("Producto no encontrado.");
         }
-      })
-      .catch((error) => {
-        console.error("Error al obtener el documento:", error);
-      })
-      .finally(() => {
-        setLoading(false); 
-      });
-  }, [id]); 
+      } catch (err) {
+        console.error("Error al obtener el documento:", err);
+        setError("Ocurrió un error al cargar el producto.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return (
-    <div>
-      {loading ? (
-        <h2>Cargando...</h2> 
-      ) : (
-        <ItemDetail item={item} /> 
-      )}
-    </div>
-  );
+    fetchItem();
+  }, [id]);
+
+  if (loading) return <h2>Cargando...</h2>;
+  if (error) return <h2 style={{ color: "red" }}>{error}</h2>;
+
+  return <ItemDetail item={item} onAddToCart={addToCart} />;
 };
 
 export default ItemDetailContainer;
+
