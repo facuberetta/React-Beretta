@@ -4,11 +4,12 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import ProductList from "./Components/productList.js";
 import CategoryFilter from "./Components/categoryFilter.js";
-import Cart from "./Components/cart";
+import Cart from "./Components/cart.js";
 import ItemDetailContainer from "./Components/ItemDetailContainer.js"; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 import { useEffect, useState } from "react";
+import OrderSuccess from "./Components/OrderSuccess.js";
 
 function App() {
     const [products, setProducts] = useState([]);
@@ -40,20 +41,37 @@ function App() {
         });
     };
 
+    const updateQuantity = (productId, newQuantity) => {
+        setCart((prevCart) =>
+            prevCart.map((item) =>
+                item.id === productId ? { ...item, quantity: newQuantity } : item
+            )
+        );
+    };
+
+    const removeFromCart = (productId) => {
+        setCart((prevCart) => prevCart.filter((item) => item.id !== productId));
+    };
+
+    const clearCart = () => {
+        setCart([]);
+    };
+
     return (
-<Router>
-    <div>
-        <Navbar cart={cart} /> {/* Pasamos cart como prop */}
-        <h1>Emma Wine's</h1>
-        <CategoryFilter categories={categories} setSelectedCategory={setSelectedCategory} />
-        <Routes>
-            <Route path="/" element={<ProductList products={products} selectedCategory={selectedCategory} addToCart={addToCart} />} />
-            <Route path="/categoria/vinos" element={<ProductList products={products} selectedCategory={selectedCategory} addToCart={addToCart} />} />
-            <Route path="/producto/:id" element={<ItemDetailContainer onAddToCart={addToCart} />} />
-            <Route path="/cart" element={<Cart cart={cart} />} />
-        </Routes>
-    </div>
-</Router>
+        <Router>
+            <div>
+                <Navbar cart={cart} /> 
+                <h1>Emma Wine's</h1>
+                <CategoryFilter categories={categories} setSelectedCategory={setSelectedCategory} />
+                <Routes>
+                    <Route path="/" element={<ProductList products={products} selectedCategory={selectedCategory} addToCart={addToCart} />} />
+                    <Route path="/categoria/vinos" element={<ProductList products={products} selectedCategory={selectedCategory} addToCart={addToCart} />} />
+                    <Route path="/producto/:id" element={<ItemDetailContainer onAddToCart={addToCart} />} />
+                    <Route path="/cart" element={<Cart cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
+                    <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+                </Routes>
+            </div>
+        </Router>
     );
 }
 

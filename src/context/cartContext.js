@@ -18,7 +18,7 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "productos"));
+        const querySnapshot = await getDocs(collection(db, "products"));
         const productsList = querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
         setProducts(productsList);
       } catch (error) {
@@ -37,13 +37,18 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product) => {
     setCart((prevCart) => {
-      const existingProduct = prevCart.find((item) => item.id === product.id);
-      if (existingProduct) {
-        return prevCart.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
+      const newCart = [...prevCart]; 
+      const existingProductIndex = newCart.findIndex((item) => item.id === product.id);
+  
+      if (existingProductIndex !== -1) {
+        if (newCart[existingProductIndex].quantity < product.stock) {
+          newCart[existingProductIndex].quantity += 1;
+        }
+      } else {
+        newCart.push({ ...product, quantity: 1 });
       }
-      return [...prevCart, { ...product, quantity: 1 }];
+  
+      return newCart;
     });
   };
 
@@ -51,22 +56,38 @@ export const CartProvider = ({ children }) => {
     setCart((prevCart) => prevCart.filter((item) => item.id !== id));
   };
 
+  const updateQuantity = (id, quantity) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === id
+          ? { ...item, quantity: Math.min(item.stock, Math.max(1, quantity)) }
+          : item
+      )
+    );
+  };
+
   const clearCart = () => {
     setCart([]);
   };
 
-  const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const cartTotal = useMemo(() => {
+    return cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  }, [cart]);
 
-  // 🛠️ Memoizamos el objeto `value` para evitar recreaciones innecesarias
-  const value = useMemo(() => ({
-    cart,
-    addToCart,
-    removeFromCart,
-    clearCart,
-    cartTotal,
-    products,
-    loading
-  }), [cart, products, loading]);
+  const value = useMemo(
+    () => ({
+      cart,
+      addToCart,
+      removeFromCart,
+      updateQuantity,
+      clearCart,
+      cartTotal,
+      products,
+      loading,
+    }),
+    [cart, cartTotal, products, loading]
+  );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
+  

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getFirestore, doc, getDoc } from "firebase/firestore";
 import ItemDetail from "./itemDetail"; 
-import { useCart } from "../context/cartContext";
+import { useCart } from "../context/CartContext";
 
 const ItemDetailContainer = () => {
   const { addToCart } = useCart(); 

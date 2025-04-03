@@ -1,53 +1,56 @@
-import { useState, useContext } from "react";
-import { CartContext } from "../../context/CartContext";
+import { useState } from "react";
+import { useCart } from "../context/CartContext";
 import { collection, addDoc, getFirestore } from "firebase/firestore";
 
 const Checkout = () => {
-    const { cart, totalPrice, clearCart } = useContext(CartContext);
+    const { cart, cartTotal, clearCart } = useCart();
     const [buyer, setBuyer] = useState({ name: "", email: "", phone: "" });
     const [orderId, setOrderId] = useState(null);
+    const [error, setError] = useState("");
 
     const handleInputChange = (e) => {
         setBuyer({ ...buyer, [e.target.name]: e.target.value });
     };
 
-    const validateEmail = (email) => {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(String(email).toLowerCase());
-    };
-
-    const validatePhone = (phone) => {
-        const re = /^[0-9]{10}$/;
-        return re.test(String(phone));
-    };
+    const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const validatePhone = (phone) => /^[0-9]{10}$/.test(phone);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (!buyer.name || !buyer.email || !buyer.phone) {
+            setError("Todos los campos son obligatorios.");
+            return;
+        }
+
         if (!validateEmail(buyer.email)) {
-            alert("Por favor, introduce un correo electrónico válido.");
+            setError("Por favor, introduce un correo electrónico válido.");
             return;
         }
 
         if (!validatePhone(buyer.phone)) {
-            alert("Por favor, introduce un número de teléfono válido.");
+            setError("Por favor, introduce un número de teléfono válido.");
             return;
         }
+
+        setError(""); // Reseteamos errores antes de continuar
 
         const order = {
             buyer,
             items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
-            total: totalPrice(),
+            total: cartTotal, // Ahora se usa correctamente como variable
             date: new Date(),
         };
 
-        const db = getFirestore();
-        const ordersCollection = collection(db, "orders");
         try {
+            const db = getFirestore();
+            const ordersCollection = collection(db, "orders");
             const docRef = await addDoc(ordersCollection, order);
             setOrderId(docRef.id);
             clearCart();
         } catch (error) {
-            alert("¡Gracias por tu compra! Tu número de orden es: " + docRef.id);
+            console.error("Error al generar la orden:", error);
+            setError("Hubo un problema con tu compra. Inténtalo nuevamente.");
         }
     };
 
@@ -57,12 +60,15 @@ const Checkout = () => {
             {orderId ? (
                 <p>¡Gracias por tu compra! Tu número de orden es: <strong>{orderId}</strong></p>
             ) : (
-                <form onSubmit={handleSubmit}>
-                    <input type="text" name="name" placeholder="Nombre" value={buyer.name} onChange={handleInputChange} required />
-                    <input type="email" name="email" placeholder="Email" value={buyer.email} onChange={handleInputChange} required />
-                    <input type="tel" name="phone" placeholder="Teléfono" value={buyer.phone} onChange={handleInputChange} required />
-                    <button type="submit">Confirmar compra</button>
-                </form>
+                <>
+                    {error && <p style={{ color: "red" }}>{error}</p>}
+                    <form onSubmit={handleSubmit}>
+                        <input type="text" name="name" placeholder="Nombre" value={buyer.name} onChange={handleInputChange} required />
+                        <input type="email" name="email" placeholder="Email" value={buyer.email} onChange={handleInputChange} required />
+                        <input type="tel" name="phone" placeholder="Teléfono" value={buyer.phone} onChange={handleInputChange} required />
+                        <button type="submit">Confirmar compra</button>
+                    </form>
+                </>
             )}
         </div>
     );
