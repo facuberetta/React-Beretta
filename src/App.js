@@ -10,6 +10,8 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import "./App.css";
 import { useEffect, useState } from "react";
 import OrderSuccess from "./Components/OrderSuccess.js";
+import Checkout from "./Components/checkout.js";
+
 
 function App() {
     const [products, setProducts] = useState([]);
@@ -69,7 +71,9 @@ function App() {
                     <Route path="/producto/:id" element={<ItemDetailContainer onAddToCart={addToCart} />} />
                     <Route path="/cart" element={<Cart cart={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />} />
                     <Route path="/order-success/:orderId" element={<OrderSuccess />} />
-                </Routes>
+                    <Route path="/category/:categoryName" element={<ProductList products={products} addToCart={addToCart} />} />
+                    <Route path="/checkout" element={<Checkout cart={cart} />} />
+                    </Routes>
             </div>
         </Router>
     );

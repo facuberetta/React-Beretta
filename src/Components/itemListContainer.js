@@ -1,45 +1,47 @@
-import { useState, useEffect } from "react"; // <-- Agregamos la importación
+import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import ItemList from "./itemList";
 import { db } from "../firebaseConfig";
 
-const ItemListContainer = ({ filter }) => {
+const ItemListContainer = ({ filter, selectedCategory }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const itemsCollection = collection(db, "vinos");
-
-    getDocs(itemsCollection)
-      .then((snapshot) => {
+    const fetchItems = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "vinos"));
         const itemsData = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        console.log("Productos obtenidos:", itemsData);
         setItems(itemsData);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error al obtener los productos:", error);
-      })
-      .finally(() => {
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchItems();
   }, []);
 
-  const filteredItems = filter
-    ? items.filter((item) =>
-        item.name.toLowerCase().includes(filter.toLowerCase())
-      )
-    : items;
+  // Aplicamos filtros combinados (nombre y categoría)
+  const filteredItems = items.filter((item) => {
+    const matchesFilter = filter
+      ? item.name.toLowerCase().includes(filter.toLowerCase())
+      : true;
+    const matchesCategory = selectedCategory ? item.category === selectedCategory : true;
+    return matchesFilter && matchesCategory;
+  });
 
   return (
     <div>
       {loading ? <h2>Cargando productos...</h2> : <ItemList items={filteredItems} />}
-      {items.length === 0 && !loading && <h2>No hay productos disponibles.</h2>}
+      {!loading && filteredItems.length === 0 && <h2>No hay productos disponibles.</h2>}
     </div>
   );
 };
 
-
 export default ItemListContainer;
+

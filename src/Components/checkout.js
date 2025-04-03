@@ -33,12 +33,12 @@ const Checkout = () => {
             return;
         }
 
-        setError(""); // Reseteamos errores antes de continuar
+        setError(""); 
 
         const order = {
             buyer,
             items: cart.map(({ id, name, price, quantity }) => ({ id, name, price, quantity })),
-            total: cartTotal, // Ahora se usa correctamente como variable
+            total: cartTotal,
             date: new Date(),
         };
 
